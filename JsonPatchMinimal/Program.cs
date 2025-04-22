@@ -51,6 +51,7 @@ public static class SeedData
         {
             Id = 1,
             CustomerName = "John",
+            CustomerType = CustomerType.Regular,
             Orders = new List<Order>()
             {
                 new Order

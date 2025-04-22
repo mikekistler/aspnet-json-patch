@@ -20,6 +20,7 @@ Content-Type: application/json
 
 {
   "customerName": "Jane",
+  "customerType": "VIP",
   "orders": [
     {
       "orderName": "Jane's Order"
