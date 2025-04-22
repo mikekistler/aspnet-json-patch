@@ -9,13 +9,13 @@ internal static class CustomerEndpoints {
 
         group.MapGet("/", async Task<Ok<Customer[]>> (AppDb db) =>
         {
-            return TypedResults.Ok(await db.Customers.ToArrayAsync());
+            return TypedResults.Ok(await db.Customers.Include(c => c.Orders).ToArrayAsync());
         })
         .WithName("ListCustomers");
 
         group.MapGet("/{id}", async Task<Results<Ok<Customer>,NotFound>> (AppDb db, int id) =>
         {
-            return await db.Customers.FindAsync(id) is Customer customer
+            return await db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.Id == id) is Customer customer
                 ? TypedResults.Ok(customer)
                 : TypedResults.NotFound();
         })

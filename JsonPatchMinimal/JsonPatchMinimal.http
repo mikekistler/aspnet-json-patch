@@ -3,4 +3,31 @@
 GET {{HostAddress}}/openapi/v1.json
 Accept: application/json
 
-###
+### ListCustomers
+
+GET {{HostAddress}}/customers
+Accept: application/json
+
+### GetCustomer
+
+GET {{HostAddress}}/customers/1
+Accept: application/json
+
+### CreateCustomer
+
+POST {{HostAddress}}/customers
+Content-Type: application/json
+
+{
+  "customerName": "Jane",
+  "orders": [
+    {
+      "orderName": "Jane's Order"
+    }
+  ]
+}
+
+### DeleteCustomer
+
+DELETE {{HostAddress}}/customers/2
+Accept: application/json
