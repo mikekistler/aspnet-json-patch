@@ -1,7 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using App.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+builder.Services.AddDbContext<AppDb>(opt => opt.UseInMemoryDatabase("AppDb"));
+
+// Create a custom JSON serializer settings
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // Do not serialize null values
+    options.SerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    // Make number handling strict
+    options.SerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+});
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -10,32 +24,51 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    // Seed the database with mock data
+    app.InitializeDatabase();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapCustomerEndpoints();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+public static class SeedData
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public static IApplicationBuilder InitializeDatabase(this IApplicationBuilder app)
+    {
+        var serviceProvider = app.ApplicationServices.CreateScope().ServiceProvider;
+        var db = serviceProvider.GetRequiredService<AppDb>();
+        db.Database.EnsureCreated();
+        // Bail out if the database has already been seeded
+        if (db.Customers.Any())
+        {
+            return app;
+        }
+        // Seed the database with mock data
+        var customer = new Customer
+        {
+            Id = 1,
+            CustomerName = "John",
+            Orders = new List<Order>()
+            {
+                new Order
+                {
+                    Id = 1,
+                    OrderName = "Order0"
+                },
+                new Order
+                {
+                    Id = 2,
+                    OrderName = "Order1"
+                }
+            }
+        };
+
+        db.Customers.Add(customer);
+        db.SaveChanges();
+
+        return app;
+    }
 }
