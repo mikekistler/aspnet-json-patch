@@ -1,7 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using App.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.EntityFrameworkCore;
 
+using App.Models;
 internal static class CustomerEndpoints {
     public static void MapCustomerEndpoints(this IEndpointRouteBuilder routes)
     {
@@ -41,5 +42,24 @@ internal static class CustomerEndpoints {
             return TypedResults.NotFound();
         })
         .WithName("DeleteCustomer");
+
+        group.MapPatch("/{id}", async Task<Results<Ok<Customer>,NotFound>> (AppDb db, int id,
+            JsonPatchDocument<Customer> patchDoc) =>
+        {
+            var customer = await db.Customers.FindAsync(id);
+            if (customer is null)
+            {
+                return TypedResults.NotFound();
+            }
+            if (patchDoc != null)
+            {
+                patchDoc.ApplyTo(customer);
+                await db.SaveChangesAsync();
+            }
+
+            return TypedResults.Ok(customer);
+        })
+        .WithName("PatchCustomer")
+        .Accepts<JsonPatchDocument<Customer>>("application/json-patch+json");
     }
 }
