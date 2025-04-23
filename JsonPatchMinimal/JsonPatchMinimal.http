@@ -32,3 +32,21 @@ Content-Type: application/json
 
 DELETE {{HostAddress}}/customers/2
 Accept: application/json
+
+### test-fail.json
+
+PATCH {{HostAddress}}/customers/1
+Content-Type: application/json-patch+json
+
+[
+  {
+    "op": "test",
+    "path": "/customerName",
+    "value": "Nancy"
+  },
+  {
+    "op": "add",
+    "path": "/customerName",
+    "value": "Phil"
+  }
+]

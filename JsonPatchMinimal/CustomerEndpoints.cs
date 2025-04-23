@@ -53,7 +53,17 @@ internal static class CustomerEndpoints {
             }
             if (patchDoc != null)
             {
-                patchDoc.ApplyTo(customer);
+                List<ValidationError> errors = null;
+                patchDoc.ApplyTo(customer, jsonPatchError =>
+                    {
+                        errors ??= new List<ValidationError>();
+                        var key = jsonPatchError.AffectedObject.GetType().Name;
+                        errors.Add(new ValidationError(key, jsonPatchError.ErrorMessage));
+                    });
+                if (errors != null && errors.Count > 0)
+                {
+                    return TypedResults.ValidationProblem(errors);
+                }
                 await db.SaveChangesAsync();
             }
 
