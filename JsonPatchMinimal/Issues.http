@@ -1,54 +1,6 @@
 @HostAddress = http://localhost:5102
 
-GET {{HostAddress}}/openapi/v1.json
-Accept: application/json
-
-### ListCustomers
-
-GET {{HostAddress}}/customers
-Accept: application/json
-
-### GetCustomer
-
-GET {{HostAddress}}/customers/1
-Accept: application/json
-
-### CreateCustomer
-
-POST {{HostAddress}}/customers
-Content-Type: application/json
-
-{
-  "customerName": "Jane",
-  "customerType": "VIP",
-  "orders": [
-    {
-      "orderName": "Jane's Order"
-    }
-  ]
-}
-
-### DeleteCustomer
-
-DELETE {{HostAddress}}/customers/2
-Accept: application/json
-
-### add.json
-
-PATCH {{HostAddress}}/customers/1
-Content-Type: application/json-patch+json
-
-[
-  {
-    "op": "add",
-    "path": "/orders/-",
-    "value": {
-      "orderName": "Order3"
-    }
-  }
-]
-
-### copy.json
+### Copy within the same array
 
 PATCH {{HostAddress}}/customers/1
 Content-Type: application/json-patch+json
@@ -56,8 +8,8 @@ Content-Type: application/json-patch+json
 [
   {
     "op": "copy",
-    "from": "/orders/1/orderName",
-    "path": "/orders/0/orderName"
+    "from": "/orders/0",
+    "path": "/orders/1"
   }
 ]
 

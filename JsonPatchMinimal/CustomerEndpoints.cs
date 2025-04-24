@@ -43,24 +43,41 @@ internal static class CustomerEndpoints {
         })
         .WithName("DeleteCustomer");
 
-        group.MapPatch("/{id}", async Task<Results<Ok<Customer>,NotFound>> (AppDb db, int id,
-            JsonPatchDocument<Customer> patchDoc) =>
+        group.MapPatch("/{id}", async Task<Results<Ok<Customer>,NotFound,BadRequest, ValidationProblem>> (AppDb db, int id,
+            JsonPatchDocument<CustomerPoco> patchDoc) =>
         {
-            var customer = await db.Customers.FindAsync(id);
+            var customer = await db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.Id == id);
             if (customer is null)
             {
-                return TypedResults.NotFound();
+                // return TypedResults.NotFound();
+                customer = new Customer { Id = id };
+                patchDoc.ApplyTo(customer);
+                if (customer.Id != id)
+                {
+                    return TypedResults.BadRequest();
+                }
+                await db.SaveChangesAsync();
             }
             if (patchDoc != null)
             {
-                List<ValidationError> errors = null;
+                // Create a poco from the customer
+                // Apply the patch to the poco
+                // Validate the poco
+                // If valid, apply the changes from the poco to the customer
+
+                var poco = new Customer(customer);
+                Dictionary<string, string[]> errors = null;
                 patchDoc.ApplyTo(customer, jsonPatchError =>
                     {
-                        errors ??= new List<ValidationError>();
+                        errors ??= new ();
                         var key = jsonPatchError.AffectedObject.GetType().Name;
-                        errors.Add(new ValidationError(key, jsonPatchError.ErrorMessage));
+                        if (!errors.ContainsKey(key))
+                        {
+                            errors.Add(key, new string[] { });
+                        }
+                        errors[key] = errors[key].Append(jsonPatchError.ErrorMessage).ToArray();
                     });
-                if (errors != null && errors.Count > 0)
+                if (errors != null)
                 {
                     return TypedResults.ValidationProblem(errors);
                 }
