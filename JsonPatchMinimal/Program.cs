@@ -5,7 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddDbContext<AppDb>(opt => opt.UseInMemoryDatabase("AppDb"));
+// Use Cosmos DB and configure to use the emulator
+builder.Services.AddDbContext<AppDb>();
 
 // Create a custom JSON serializer settings
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -25,7 +26,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     // Seed the database with mock data
-    app.InitializeDatabase();
+    await SeedData.InitializeDatabaseAsync(app.Services);
 }
 
 app.UseHttpsRedirection();
@@ -36,40 +37,39 @@ app.Run();
 
 public static class SeedData
 {
-    public static IApplicationBuilder InitializeDatabase(this IApplicationBuilder app)
+    public static async Task InitializeDatabaseAsync(IServiceProvider services)
     {
-        var serviceProvider = app.ApplicationServices.CreateScope().ServiceProvider;
-        var db = serviceProvider.GetRequiredService<AppDb>();
-        db.Database.EnsureCreated();
-        // Bail out if the database has already been seeded
-        if (db.Customers.Any())
-        {
-            return app;
-        }
-        // Seed the database with mock data
-        var customer = new Customer
-        {
-            Id = 1,
-            CustomerName = "John",
-            CustomerType = CustomerType.Regular,
-            Orders = new List<Order>()
-            {
-                new Order
-                {
-                    Id = 1,
-                    OrderName = "Order0"
-                },
-                new Order
-                {
-                    Id = 2,
-                    OrderName = "Order1"
-                }
-            }
-        };
+        using var scope = services.CreateScope(); // Create a scope
+        var db = scope.ServiceProvider.GetRequiredService<AppDb>(); // Resolve AppDb within the scope
+        await db.Database.EnsureCreatedAsync();
+        // // Bail out if the database has already been seeded
+        // var exists = await db.Customers.Select(c => c.Id).Take(1).AnyAsync();
+        // if (exists)
+        // {
+        //     return;
+        // }
+        // // Seed the database with mock data
+        // var customer = new Customer
+        // {
+        //     Id = 1,
+        //     CustomerName = "John",
+        //     CustomerType = CustomerType.Regular,
+        //     Orders = new List<Order>()
+        //     {
+        //         new Order
+        //         {
+        //             Id = 1,
+        //             OrderName = "Order0"
+        //         },
+        //         new Order
+        //         {
+        //             Id = 2,
+        //             OrderName = "Order1"
+        //         }
+        //     }
+        // };
 
-        db.Customers.Add(customer);
-        db.SaveChanges();
-
-        return app;
+        // await db.Customers.AddAsync(customer);
+        // await db.SaveChangesAsync();
     }
 }

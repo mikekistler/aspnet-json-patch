@@ -10,7 +10,9 @@ Accept: application/json
 
 ### GetCustomer
 
-GET {{HostAddress}}/customers/1
+@id=5889b091-ebe9-40d9-9b21-9e9c14c796b6
+
+GET {{HostAddress}}/customers/{{id}}
 Accept: application/json
 
 ### CreateCustomer
@@ -19,23 +21,21 @@ POST {{HostAddress}}/customers
 Content-Type: application/json
 
 {
-  "customerName": "Jane",
-  "customerType": "VIP",
-  "orders": [
-    {
-      "orderName": "Jane's Order"
-    }
-  ]
+  "Name": "Jane Smith",
+  "Email": "janesmith@gmail.com",
+  "PhoneNumber": "987-654-3210",
+  "Address": "456 Elm St, Othertown, USA",
+  "Type": "Prime"
 }
 
 ### DeleteCustomer
 
-DELETE {{HostAddress}}/customers/2
+DELETE {{HostAddress}}/customers/{{id}}
 Accept: application/json
 
 ### add.json
 
-PATCH {{HostAddress}}/customers/1
+PATCH {{HostAddress}}/customers/{{id}}
 Content-Type: application/json-patch+json
 
 [
@@ -43,53 +43,74 @@ Content-Type: application/json-patch+json
     "op": "add",
     "path": "/orders/-",
     "value": {
-      "orderName": "Order3"
+      "orderDate": "2025-04-21T00:00:00Z",
+      "totalAmount": 150.00
     }
   }
 ]
 
 ### copy.json
 
-PATCH {{HostAddress}}/customers/1
+PATCH {{HostAddress}}/customers/{{id}}
 Content-Type: application/json-patch+json
 
 [
+    {
+    "op": "replace",
+    "path": "/orders/0/shipDate",
+    "value":  "2025-04-25T12:34:56Z"
+  },
   {
     "op": "copy",
-    "from": "/orders/1/orderName",
-    "path": "/orders/0/orderName"
+    "from": "/orders/0/shipDate",
+    "path": "/orders/1/shipDate"
   }
 ]
 
 ### Try modifying an enum
 
-PATCH {{HostAddress}}/customers/2
+PATCH {{HostAddress}}/customers/{{id}}
 Content-Type: application/json-patch+json
 
 [
   {
     "op": "replace",
-    "path": "/customerType",
+    "path": "/type",
     "value": "Regular"
   }
 ]
 
+### Replace
+
+PATCH {{HostAddress}}/customers/{{id}}
+Content-Type: application/json-patch+json
+
+[
+  {
+    "op": "replace",
+    "path": "/orders/0",
+    "value": {
+      "orderDate": "2025-04-21T12:12:12Z",
+      "totalAmount": 250.00
+    }
+  }
+]
 
 ### test-fail.json
 
-PATCH {{HostAddress}}/customers/1
+PATCH {{HostAddress}}/customers/{{id}}
 Content-Type: application/json-patch+json
 
 [
   {
     "op": "test",
-    "path": "/customerName",
-    "value": "Nancy"
+    "path": "/name",
+    "value": "Nancy Jones"
   },
   {
     "op": "add",
-    "path": "/customerName",
-    "value": "Phil"
+    "path": "/name",
+    "value": "Nancy James"
   }
 ]
 
@@ -101,12 +122,12 @@ Content-Type: application/json-patch+json
 [
   {
     "op": "replace",
-    "path": "/customerName",
-    "value": "Phil"
+    "path": "/name",
+    "value": "Nancy Jones"
   },
   {
     "op": "test",
-    "path": "/customerName",
+    "path": "/name",
     "value": "Nancy"
   }
 ]

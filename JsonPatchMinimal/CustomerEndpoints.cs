@@ -14,7 +14,7 @@ internal static class CustomerEndpoints {
         })
         .WithName("ListCustomers");
 
-        group.MapGet("/{id}", async Task<Results<Ok<Customer>,NotFound>> (AppDb db, int id) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Customer>,NotFound>> (AppDb db, string id) =>
         {
             return await db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.Id == id) is Customer customer
                 ? TypedResults.Ok(customer)
@@ -30,7 +30,7 @@ internal static class CustomerEndpoints {
         })
         .WithName("CreateCustomer");
 
-        group.MapDelete("/{id}", async Task<Results<NoContent,NotFound>> (AppDb db, int id) =>
+        group.MapDelete("/{id}", async Task<Results<NoContent,NotFound>> (AppDb db, string id) =>
         {
             if (await db.Customers.FindAsync(id) is Customer customer)
             {
@@ -43,30 +43,17 @@ internal static class CustomerEndpoints {
         })
         .WithName("DeleteCustomer");
 
-        group.MapPatch("/{id}", async Task<Results<Ok<Customer>,NotFound,BadRequest, ValidationProblem>> (AppDb db, int id,
-            JsonPatchDocument<CustomerPoco> patchDoc) =>
+        group.MapPatch("/{id}", async Task<Results<Ok<Customer>,NotFound,BadRequest, ValidationProblem>> (AppDb db, string id,
+            JsonPatchDocument<Customer> patchDoc) =>
         {
             var customer = await db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.Id == id);
             if (customer is null)
             {
-                // return TypedResults.NotFound();
-                customer = new Customer { Id = id };
-                patchDoc.ApplyTo(customer);
-                if (customer.Id != id)
-                {
-                    return TypedResults.BadRequest();
-                }
-                await db.SaveChangesAsync();
+                return TypedResults.NotFound();
             }
             if (patchDoc != null)
             {
-                // Create a poco from the customer
-                // Apply the patch to the poco
-                // Validate the poco
-                // If valid, apply the changes from the poco to the customer
-
-                var poco = new Customer(customer);
-                Dictionary<string, string[]> errors = null;
+                Dictionary<string, string[]>? errors = null;
                 patchDoc.ApplyTo(customer, jsonPatchError =>
                     {
                         errors ??= new ();
