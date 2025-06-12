@@ -7,3 +7,33 @@ Accept: application/json
 
 GET {{HostAddress}}/api/customers/1
 Accept: application/json
+
+###
+
+PATCH  {{HostAddress}}/api/customers/1
+Content-Type: application/json-patch+json
+Accept: application/json
+
+[
+  {
+    "op": "replace",
+    "path": "/email",
+    "value": "foo@bar.baz"
+  }
+]
+
+###
+
+# Error response
+
+PATCH  {{HostAddress}}/api/customers/1
+Content-Type: application/json-patch+json
+Accept: application/json
+
+[
+  {
+    "op": "add",
+    "path": "/foobar",
+    "value": 42
+  }
+]
