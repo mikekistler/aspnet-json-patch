@@ -1,0 +1,6 @@
+@JsonPatchSample_HostAddress = http://localhost:5221
+
+GET {{JsonPatchSample_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
